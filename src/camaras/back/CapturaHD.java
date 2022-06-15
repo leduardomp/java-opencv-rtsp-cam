@@ -4,11 +4,14 @@
  */
 package camaras.back;
 
+import camaras.view.CamaraHD;
 import java.awt.Dimension;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
+import javax.swing.JFrame;
 import org.imgscalr.Scalr;
 import org.imgscalr.Scalr.Method;
 import org.opencv.core.Mat;
@@ -18,40 +21,52 @@ import org.opencv.videoio.VideoCapture;
  *
  * @author luis
  */
-public class Captura implements Runnable{
+public class CapturaHD implements Runnable{
     
-    public volatile boolean runnable = true;
+    public boolean runnable = true;
+    private final String nombreCamara;
     private final String urlVideo;
-    private final JLabel imagenView;
     private VideoCapture videoCapture;
 
-    public Captura(String urlVideo, JLabel imagenView) {
-        this.urlVideo = urlVideo;
-        this.imagenView = imagenView;
+    public CapturaHD(String nombreCamara, String urlHD) {
+        this.nombreCamara = nombreCamara;
+        this.urlVideo = urlHD;
     }
     
     @Override
     public void run() {
         System.out.println("Inicia Hilo");
+
+        CamaraHD camaraHD = new CamaraHD(this.nombreCamara);
+        camaraHD.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        camaraHD.setVisible(true);
+        camaraHD.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                runnable = false;
+                e.getWindow().dispose();
+            }
+        });
+
         videoCapture = new VideoCapture(urlVideo);
-        
+
         if (videoCapture.isOpened()) {
             while (runnable) {
                 try {
                     Mat frame = new Mat();
-                    if(videoCapture.read(frame)) {
+                    if (videoCapture.read(frame)) {
 
-                        imagenView.setIcon(new ImageIcon(Mat2bufferedImage(frame, this.imagenView.getSize())));
-                        imagenView.repaint();
+                        camaraHD.getView().setIcon(new ImageIcon(Mat2bufferedImage(frame, camaraHD.getView().getSize())));
+                        camaraHD.getView().repaint();
 
-                    }else{
+                    } else {
                         System.out.println("no red frame");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        }else{
+        } else {
             System.out.println("Video capture no is open");
         }
         System.out.println("Fin del hilo");

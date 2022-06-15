@@ -5,6 +5,7 @@
 package camaras.view;
 
 import camaras.back.Captura;
+import camaras.back.CapturaHD;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -22,7 +23,6 @@ public class Camara extends javax.swing.JPanel {
     private String urlVideo;
     private final String nombreCamara;
     private Thread thread;
-    private VideoCapture videoCapture;
     private Captura captura;
 
     /**
@@ -93,50 +93,22 @@ public class Camara extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        videoCapture = new VideoCapture(urlVideo);
+
         // If camera is opened
-        if (videoCapture.isOpened()) {
+        if (thread != null) {
+            captura.runnable = false;
+        }
 
-            if (thread != null) {
-                captura.runnable = false;
-            }
-
-            captura = new Captura(videoCapture, imagenView);
-            thread = new Thread(captura);
-            thread.start();
-
-        } else
-            System.out.println("No es open");
+        captura = new Captura(urlVideo, imagenView);
+        thread = new Thread(captura);
+        thread.start();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void visualizarEnGrande(MouseEvent evt) {//GEN-FIRST:event_visualizarEnGrande
         if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             System.out.println("double clicked");
             String urlHD = this.urlVideo.replace("stream=1", "stream=0");
-
-            CamaraHD camaraHD = new CamaraHD(this.nombreCamara);
-            camaraHD.setVisible(true);
-
-            VideoCapture videoCaptureHD = new VideoCapture(urlHD);
-            // If camera is opened
-            if (videoCaptureHD.isOpened()) {
-
-                Captura capturaHD = new Captura(videoCaptureHD, camaraHD.getView());
-                Thread threadHD = new Thread(capturaHD);
-                threadHD.start();
-                
-                camaraHD.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-                    camaraHD.addWindowListener(new WindowAdapter() {
-                        @Override
-                        public void windowClosing(WindowEvent e) {
-                            capturaHD.runnable = false;
-                            e.getWindow().dispose();
-                        }
-                    });
-
-            } else {
-                System.out.println("No es open en HD");
-            }
+            new Thread(new CapturaHD(this.nombreCamara, urlHD)).start();
         }
     }//GEN-LAST:event_visualizarEnGrande
 
